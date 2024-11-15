@@ -1,4 +1,4 @@
-# EX.-NO-2-A IMPLEMENTATION OF RAIL FENCE ROW COLUMN TRANSFORMATION TECHNIQUE
+# EX-NO-2-B-COLUMN TRANSFORMATION CIPHER
 
 ## AIM:
   To write a C program to implement the rail fence transposition technique.
@@ -17,106 +17,133 @@ STEP-5: Read the characters row wise or column wise in the former order to get t
 
 ## PROGRAM:
 ```
-   #include <stdio.h>
-    #include <string.h>
+#include <stdio.h>
+#include <string.h>
 
-    void encrypt(char *text, int key, char *result) {
-    int len = strlen(text);
-    char rail[key][len];
-    int i, j;
+void cipher(int i, int r);
+int findMin();
+void makeArray(int col, int row);
+
+char arr[22][22], darr[22][22], emessage[111], retmessage[111], key[55];
+char temp[55], temp2[55];
+int k = 0;
+
+int main() {
+    char message[111];
+    int i, j, klen, emlen, flag = 0;
+    int r, c, index, rows;
+
+    printf("Enter the key:\n");
+    scanf("%s", key);
     
-    // Initializing the rail matrix with '\n'
-    for (i = 0; i < key; i++)
-        for (j = 0; j < len; j++)
-            rail[i][j] = '\n';
+    printf("\nEnter the message to be ciphered:\n");
+    getchar(); // To consume newline left by scanf
+    fgets(message, sizeof(message), stdin);
+    message[strcspn(message, "\n")] = '\0'; // Remove newline character from fgets
 
-    int dir_down = 0;
-    int row = 0, col = 0;
+    strcpy(temp, key);
+    klen = strlen(key);
+    k = 0;
 
-    // Placing the characters in the rail matrix
-    for (i = 0; i < len; i++) {
-        if (row == 0 || row == key - 1)
-            dir_down = !dir_down;
-        rail[row][col++] = text[i];
-        row = dir_down ? row + 1 : row - 1;
+    // Fill the array with the message
+    for (i = 0; ; i++) {
+        if (flag == 1) break;
+        for (j = 0; j < klen; j++) {
+            if (message[k] == '\0') {
+                flag = 1;
+                arr[i][j] = '-';
+            } else {
+                arr[i][j] = message[k++];
+            }
+        }
     }
 
-    // Constructing the result from the rail matrix
-    int index = 0;
-    for (i = 0; i < key; i++)
-        for (j = 0; j < len; j++)
-            if (rail[i][j] != '\n')
-                result[index++] = rail[i][j];
-    result[index] = '\0';  // Null-terminate the result string
+    r = i;
+    c = j;
+
+    // Print the filled array
+    for (i = 0; i < r; i++) {
+        for (j = 0; j < c; j++) {
+            printf("%c ", arr[i][j]);
+        }
+        printf("\n");
     }
 
-    void decrypt(char *cipher, int key, char *result) {
-    int len = strlen(cipher);
-    char rail[key][len];
-    int i, j;
+    // Encryption process
+    k = 0;
+    for (i = 0; i < klen; i++) {
+        index = findMin();
+        cipher(index, r);
+    }
+    emessage[k] = '\0';
 
-    // Initializing the rail matrix with '\n'
-    for (i = 0; i < key; i++)
-        for (j = 0; j < len; j++)
-            rail[i][j] = '\n';
+    printf("\nEncrypted message is:\n");
+    printf("%s\n\n", emessage);
 
-    int dir_down;
-    int row = 0, col = 0;
+    // Decryption process
+    emlen = strlen(emessage);
+    strcpy(temp, key);
+    rows = emlen / klen;
 
-    // Marking the positions with '*'
-    for (i = 0; i < len; i++) {
-        if (row == 0)
-            dir_down = 1;
-        if (row == key - 1)
-            dir_down = 0;
-        rail[row][col++] = '*';
-        row = dir_down ? row + 1 : row - 1;
+    j = 0;
+    for (i = 0, k = 1; emessage[i] != '\0'; i++, k++) {
+        temp2[j++] = emessage[i];
+        if ((k % rows) == 0) {
+            temp2[j] = '\0';
+            index = findMin();
+            makeArray(index, rows);
+            j = 0;
+        }
     }
 
-    // Placing the cipher text in the marked positions
-    int index = 0;
-    for (i = 0; i < key; i++)
-        for (j = 0; j < len; j++)
-            if (rail[i][j] == '*' && index < len)
-                rail[i][j] = cipher[index++];
-
-    // Constructing the result from the rail matrix
-    row = 0, col = 0;
-    for (i = 0; i < len; i++) {
-        if (row == 0)
-            dir_down = 1;
-        if (row == key - 1)
-            dir_down = 0;
-        if (rail[row][col] != '*')
-            result[i] = rail[row][col++];
-        row = dir_down ? row + 1 : row - 1;
-    }
-    result[len] = '\0';  // Null-terminate the result string
+    printf("\nArray Retrieved is:\n");
+    k = 0;
+    for (i = 0; i < r; i++) {
+        for (j = 0; j < c; j++) {
+            printf("%c ", darr[i][j]);
+            retmessage[k++] = darr[i][j];
+        }
+        printf("\n");
     }
 
-    int main() {
-    printf("RAIL FENCE CIPHER: \n");
-
-    char text[] = "Hello Everyone";
-    int key = 3;
-    char cipher[100];
-    char decrypted[100];
-
-    printf("The Original Text: %s\n", text);
-
-    encrypt(text, key, cipher);
-    printf("CipherText: %s\n", cipher);
-
-    decrypt(cipher, key, decrypted);
-    printf("Decrypted Text: %s\n", decrypted);
+    retmessage[k] = '\0';
+    printf("\nMessage retrieved is:\n");
+    printf("%s\n", retmessage);
 
     return 0;
-    }
-```
+}
 
+void cipher(int i, int r) {
+    int j;
+    for (j = 0; j < r; j++) {
+        emessage[k++] = arr[j][i];
+    }
+}
+
+void makeArray(int col, int row) {
+    int i;
+    for (i = 0; i < row; i++) {
+        darr[i][col] = temp2[i];
+    }
+}
+
+int findMin() {
+    int j, min, index;
+    min = temp[0];
+    index = 0;
+    for (j = 0; temp[j] != '\0'; j++) {
+        if (temp[j] < min) {
+            min = temp[j];
+            index = j;
+        }
+    }
+    temp[index] = 123; // Mark character as used
+    return index;
+}
+```
 ## OUTPUT:
-![image](https://github.com/user-attachments/assets/c48b2d7f-dbd9-4ef2-be39-c598935b7bdf)
+![Screenshot 2024-11-09 103120](https://github.com/user-attachments/assets/6619a0e6-b3f9-4814-82e6-63f1beec9b33)
 
 
 ## RESULT:
-  Thus the rail fence algorithm had been executed successfully.
+Thus the rail fence cipher using row column transformation technique is executed and implemented.
